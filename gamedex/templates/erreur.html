@@ -1,0 +1,9 @@
+{{define "erreur" -}}
+{{template "header" .}}
+<section class="erreur">
+  <h1>Erreur {{.Code}}</h1>
+  <p>{{.Message}}</p>
+  <p class="boutons"><a href="/">Retour à l'accueil</a></p>
+</section>
+{{template "footer" .}}
+{{- end}}

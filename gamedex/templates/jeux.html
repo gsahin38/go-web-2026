@@ -1,0 +1,16 @@
+{{define "jeux" -}}
+{{template "header" .}}
+<h1>Les jeux</h1>
+{{if .Query}}<p class="recherche">Vous avez cherché : {{.Query}}</p>{{end}}
+<ul class="liste-jeux">
+  {{range .Games -}}
+  <li>
+    <a href="/jeux/{{.ID}}">{{.Name}}</a>
+    <span class="detail">{{.Genre}}, {{.Year}}</span>
+  </li>
+  {{- else -}}
+  <li>Aucun jeu à afficher.</li>
+  {{- end}}
+</ul>
+{{template "footer" .}}
+{{- end}}

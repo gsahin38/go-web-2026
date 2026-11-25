@@ -1,0 +1,25 @@
+{{define "jeu" -}}
+{{template "header" .}}
+<p><a href="/jeux">Retour aux jeux</a></p>
+<h1>{{.Game.Name}}</h1>
+<p class="detail">{{.Game.Genre}}, sorti en {{.Game.Year}}</p>
+
+<h2>Tournois</h2>
+{{if .Tournaments -}}
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>Nom</th><th>Ville</th><th>Date</th></tr>
+    </thead>
+    <tbody>
+      {{range .Tournaments -}}
+      <tr><td>{{.Name}}</td><td>{{.City}}</td><td>{{.Date}}</td></tr>
+      {{- end}}
+    </tbody>
+  </table>
+</div>
+{{- else -}}
+<p>Aucun tournoi pour ce jeu.</p>
+{{- end}}
+{{template "footer" .}}
+{{- end}}
