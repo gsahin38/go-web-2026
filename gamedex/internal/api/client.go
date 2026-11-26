@@ -1,4 +1,4 @@
-package client
+package api
 
 import (
 	"encoding/json"
@@ -7,6 +7,8 @@ import (
 	"net"
 	"net/http"
 	"time"
+
+	"gamedex/internal/catalog"
 )
 
 const baseURL = "http://localhost:8081"
@@ -17,61 +19,50 @@ const timeout = 3 * time.Second
 
 var httpClient = &http.Client{Timeout: timeout}
 
-var ErrNotFound = errors.New("ressource introuvable")
-
-type Game struct {
+type gameJSON struct {
 	ID    int    `json:"id"`
 	Name  string `json:"name"`
 	Genre string `json:"genre"`
 	Year  int    `json:"year"`
 }
 
-type Tournament struct {
-	ID     int    `json:"id"`
-	Name   string `json:"name"`
-	GameID int    `json:"game_id"`
-	City   string `json:"city"`
-	Date   string `json:"date"`
+type tournamentJSON struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+	City string `json:"city"`
+	Date string `json:"date"`
 }
 
-func FetchGames() ([]Game, error) {
-	var games []Game
-	if err := getJSON(gamesPath, &games); err != nil {
+func FetchGames() ([]catalog.Game, error) {
+	var raw []gameJSON
+	if err := getJSON(gamesPath, &raw); err != nil {
 		return nil, err
 	}
-	for _, g := range games {
-		if err := checkGame(g); err != nil {
-			return nil, err
+
+	games := make([]catalog.Game, 0, len(raw))
+	for _, g := range raw {
+		if g.Name == "" {
+			return nil, fmt.Errorf("le jeu n°%d n'a pas de nom : les tags json de gameJSON ne correspondent pas au JSON de l'API", g.ID)
 		}
+		games = append(games, catalog.Game{ID: g.ID, Name: g.Name, Genre: g.Genre, Year: g.Year})
 	}
 	return games, nil
 }
 
-func FetchGame(id int) (Game, error) {
-	var game Game
-	if err := getJSON(fmt.Sprintf("/api/games/%d", id), &game); err != nil {
-		return Game{}, err
-	}
-	if err := checkGame(game); err != nil {
-		return Game{}, err
-	}
-	return game, nil
-}
-
-func FetchTournaments(gameID int) ([]Tournament, error) {
-	var tournaments []Tournament
+func FetchTournaments(gameID int) ([]catalog.Tournament, error) {
+	var raw []tournamentJSON
 	path := fmt.Sprintf("/api/games/%d/tournaments", gameID)
-	if err := getJSON(path, &tournaments); err != nil {
+	if err := getJSON(path, &raw); err != nil {
 		return nil, err
 	}
-	return tournaments, nil
-}
 
-func checkGame(g Game) error {
-	if g.Name == "" {
-		return fmt.Errorf("le jeu n°%d n'a pas de nom : les tags json de Game ne correspondent pas au JSON de l'API", g.ID)
+	tournaments := make([]catalog.Tournament, 0, len(raw))
+	for _, t := range raw {
+		tournaments = append(tournaments, catalog.Tournament{
+			ID: t.ID, Name: t.Name, GameID: gameID, City: t.City, Date: t.Date,
+		})
 	}
-	return nil
+	return tournaments, nil
 }
 
 func getJSON(path string, dest any) error {
@@ -85,9 +76,6 @@ func getJSON(path string, dest any) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusNotFound {
-		return fmt.Errorf("%s : %w", path, ErrNotFound)
-	}
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("l'API a répondu %s pour %s", resp.Status, path)
 	}

@@ -63,7 +63,6 @@ body {
 }
 
 
-
 main {
   flex: 1;
   width: min(92%, 46rem);
@@ -129,7 +128,6 @@ a:focus-visible {
   background: var(--encre);
 }
 
-/* Liste des jeux */
 
 .liste-jeux {
   margin: 0;
